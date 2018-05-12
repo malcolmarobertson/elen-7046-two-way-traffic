@@ -1,78 +1,75 @@
-'use strict';
 
-var MAX_BLOCK_WIDTH = 101;
-var MAX_CANVAS_WIDTH = 909;
-var ROW_HEIGHT = 83;
-var ROW_HEIGHT_ADJUST = 23;
-var SPEED_ADJUST = 100;
-var PLAYER_START_X = 404;
-var PLAYER_START_Y = 243;
-var MIN_PLAYER_X = 100;
-var MIN_PLAYER_Y = 72;
-var MAX_PLAYER_X = 400;
-var MAX_PLAYER_Y = 400;
-var WIN_SCORE = 100;
-var ENEMY_ROW_HEIGHT_ADJUST = 71;
-var PLAYER_ROW_HEIGHT_ADJUST_1 = 61;
-var PLAYER_ROW_HEIGHT_ADJUST_2 = 55;
-var DIR_LEFT_RIGHT = "LR";
-var DIR_RIGHT_LEFT = "RL";
-var LANE_COUNT = 2;
-var ENEMY_PER_LANE = 5;
-var MIN_ENEMY_DELAY = 2000;
-var MAX_ENEMY_DELAY = 5000;
-
+// GameObject is the superclass of a moving character in the game
+// Requires 3 parameters:
+// x: x position
+// y: y position
+// avatar: png graphic representing the character
 class GameObject {
-    constructor(sprite, x, y) {
-        this.sprite = sprite;
+    constructor(avatar, x, y) {
+        this.avatar = avatar;
         this.x = x;
         this.y = y;
     }
 }
 
+//Enemy object is a sub-class of GameObject
+// Requires 2 parameters:
+// direction: "LR" for left to right, or "RL" for right to left
+// row: the row of the game grid the Enemy must be created on
 class Enemy extends GameObject {
     constructor(direction, row) {
-        var sprite = direction == DIR_LEFT_RIGHT ? 'images/car-l-r.png' : 'images/car-r-l.png';
-        var x = direction == DIR_LEFT_RIGHT ? -MAX_BLOCK_WIDTH : MAX_CANVAS_WIDTH;
-        var y = (row * ROW_HEIGHT) - ROW_HEIGHT_ADJUST;
-        super(sprite, x, y);
+
+        //decides on avatar and start position based on direction
+        var avatar = direction == config.dirLeftRight ? 'images/car-l-r.png' : 'images/car-r-l.png';
+        var x = direction == config.dirLeftRight ? -config.maxBlockWidth : config.maxCanvasWidth;
+        var y = (row * config.rowHeight) - config.rowHeightAdjust;
+        super(avatar, x, y);
+
         this.direction = direction;
-        this.speed = 1 * SPEED_ADJUST;
-        this.running = false;
-        //this.speed = this.randomSpeed();
+        this.speed = 1 * config.speedAdjust;
+
+        //initially sets Enemy to not running
+        var running = false;
     }
 
+    //function to start the Enemy object running based on a random delay, set by a range in the configuration.
     startRunning() {
         var that = this;
-        setTimeout(function () { that.running = true; }, Math.floor(Math.random() * (MAX_ENEMY_DELAY - MIN_ENEMY_DELAY + 1)) + MIN_ENEMY_DELAY);
+        setTimeout(function () { 
+            that.running = true; 
+        }, Math.floor(Math.random() * (config.maxEnemyDelay - config.minEnemyDelay + 1)) + config.minEnemyDelay);
     }
 
+    //function to stop Enemy running
     stopRunning() {
         this.running = false;
     }
 
-    // Update the enemy's position, required method for game
-    // Parameter: dt, a time delta between ticks
+    //the main application calls this function at time-based intervals to move the enemy
     update(dt) {
         if (this.running)
-            if (this.direction == DIR_LEFT_RIGHT)
+            if (this.direction == config.dirLeftRight)
                 this.moveRight(dt);
             else
                 this.moveLeft(dt);
     }
 
+    //renders the Enemy png on the HTML5 canvas, based on x, y position
     render() {
-        ctx.drawImage(Resources.get(this.sprite), this.x, this.y);
+        ctx.drawImage(resources.get(this.avatar), this.x, this.y);
     }
 
+    //called when a collision with the Player character occurs, resets position
     die() {
         this.stopRunning();
-        this.x = this.direction == DIR_LEFT_RIGHT ? -MAX_BLOCK_WIDTH : MAX_CANVAS_WIDTH;
+        this.x = this.direction == config.dirLeftRight ? -config.maxBlockWidth : config.maxCanvasWidth;
         this.startRunning();
     }
 
+    //moves the Enemy right, based on time interval calculation
+    //if moves over the edge of game grid, then reset position
     moveRight(dt) {
-        if (this.x > MAX_CANVAS_WIDTH) {
+        if (this.x > config.maxCanvasWidth) {
             this.die();
         }
         else {
@@ -80,122 +77,102 @@ class Enemy extends GameObject {
         }
     }
 
+    //moves the Enemy left, based on time interval calculation
+    //if moves over the edge of game grid, then reset position
     moveLeft(dt) {
-        if (this.x < -MAX_BLOCK_WIDTH) {
+        if (this.x < -config.maxBlockWidth) {
             this.die();
         }
         else {
             this.x = this.x - (this.speed * dt);
         }
     }
-    //return random entry of array
-    // randomArrayEntry(inArray) {
-    //     return inArray[Math.floor(Math.random() * inArray.length)];
-    // }
-    // //generate random row for enemy
-    // randomRowY() {
-    //     var rows = Array(1, 2);
-    //     return (this.randomArrayEntry(rows) * ROW_HEIGHT) - ROW_HEIGHT_ADJUST;
-    // }
-    // //generate random speed for enemy
-    // randomSpeed() {
-    //     return (Math.random() * (11 - 1) + 1) * SPEED_ADJUST;
-    //     //return (Math.random() * (11 - 1) + 1);
-    // }
 }
 
+//Player object is a sub-class of GameObject
 class Player extends GameObject {
     constructor() {
-        super('images/char-boy.png', PLAYER_START_X, PLAYER_START_Y);
-    }
-    //TODO area of the player's sprite which is collisionable
-    //hotX = this.x + 10;
-    //hotY = this.y + 10;
-    // Draw the enemy on the screen, required method for game
-    render() {
-        ctx.drawImage(Resources.get(this.sprite), this.x, this.y);
+        super('images/char-boy.png', config.playerStartX, config.playerStartY);
     }
 
+    //renders the Enemy png on the HTML5 canvas, based on x, y position
+    render() {
+        ctx.drawImage(resources.get(this.avatar), this.x, this.y);
+    }
+
+    // function to examine input from keyboard and move player using x-y calculations
     handleInput(dir) {
         switch (dir) {
             case 'up':
                 if (this.y > 0) {
-                    this.y = this.y - ROW_HEIGHT;
-                    if (this.y < MIN_PLAYER_Y) {
+                    this.y = this.y - config.rowHeight;
+                    if (this.y < config.minPlayerY) {
                         this.win();
                     }
                 }
                 break;
             case 'down':
-                if (this.y < MAX_PLAYER_Y) {
-                    this.y = this.y + ROW_HEIGHT;
+                if (this.y < config.maxPlayerY) {
+                    this.y = this.y + config.rowHeight;
                 }
                 break;
             case 'left':
-                if (this.x > MIN_PLAYER_X) {
-                    this.x = this.x - MAX_BLOCK_WIDTH;
+                if (this.x > config.minPlayerX) {
+                    this.x = this.x - config.maxBlockWidth;
                 }
                 break;
             case 'right':
-                if (this.x < MAX_PLAYER_X) {
-                    this.x = this.x + MAX_BLOCK_WIDTH;
+                if (this.x < config.maxPlayerX) {
+                    this.x = this.x + config.maxBlockWidth;
                 }
                 break;
         }
     }
+
+    //function called when player dies, decreases score and resets to start position
     die() {
         score.decrease();
-        this.x = PLAYER_START_X;
-        this.y = PLAYER_START_Y;
+        this.x = config.playerStartX;
+        this.y = config.playerStartY;
     }
-    win() {
+
+    //function called when player dies, increases score and resets to start position
+        win() {
         score.increase();
-        this.x = PLAYER_START_X;
-        this.y = PLAYER_START_Y;
+        this.x = config.playerStartX;
+        this.y = config.playerStartY;
     }
 }
 
-class Score {
-    constructor() {
-        this.score = 0;
-    }
-    render() {
-        ctx.fillStyle = "white";
-        ctx.fillRect(0, 0, MAX_CANVAS_WIDTH, 50);
-        ctx.font = "32pt arial";
-        ctx.fillStyle = "red";
-        ctx.strokeStyle = "red";
-        ctx.lineWidth = 1;
-        ctx.strokeText('Score: ' + this.score, 10, 40);
-        ctx.strokeRect(0, 0, MAX_CANVAS_WIDTH, 50);
-    }
-    decrease() {
-        this.score--;
-        this.render();
-    }
-    increase() {
-        this.score = +WIN_SCORE;
-        this.render();
-    }
-}
 
+// MAIN CODE
+var config = new Config();
+
+//creates enemy objects based on configuration, using lane count and enemy per lane count
+//pushes the enemies onto an array
 var allEnemies = [];
 
-for (var i = 1; i <= LANE_COUNT; i++) {
-    for (var j = 1; j <= ENEMY_PER_LANE; j++) {
-        var nme = new Enemy(i % 2 ? DIR_LEFT_RIGHT : DIR_RIGHT_LEFT, i);
+for (var i = 1; i <= config.laneCount; i++) {
+    for (var j = 1; j <= config.enemyPerLane; j++) {
+        var nme = new Enemy(i % 2 ? config.dirLeftRight : config.dirRightLeft, i);
         allEnemies.push(nme);
     }
 }
 
-allEnemies.forEach(function(enemy) {
+//starts all Enemy objects
+allEnemies.forEach(function (enemy) {
     enemy.startRunning();
 });
 
-var player = new Player();
-
 var score = new Score();
+var player = new Player();
+var resources = new Resources();
+var engine = new Engine(this);
+resources.onReady(function () {
+    engine.init();
+});
 
+//JS code to enable listener for keys and send to player object if meets criteria
 document.addEventListener('keyup', function (e) {
     var allowedKeys = {
         37: 'left',

@@ -1,72 +1,79 @@
-'use strict';
+// the Game engine controls the Enemy timing, Enemy and Player rendering,
+// rendering the grid graphics based on configuration
+class Engine {
 
-var Engine = (function(global) {
-	  'use strict';
-	  
-	  
-    var doc = global.document,
-        win = global.window,
-        canvas = doc.createElement('canvas'),
-        ctx = canvas.getContext('2d'),
-        lastTime;
+    //constructs object with reference to HTML5 canvas and sets grid size
+    constructor(global) {
+        this.doc = global.document;
+        this.win = global.window;
+        this.canvas = this.doc.createElement('canvas');
+        this.ctx = this.canvas.getContext('2d');
+        this.lastTime;
+        this.canvas.width = 909;
+        this.canvas.height = 606;
+        this.doc.body.appendChild(this.canvas);
+        global.ctx = this.ctx;
+    }
 
-    canvas.width = 909;
-    canvas.height = 606;
-    doc.body.appendChild(canvas);
-
-    function main() {
+    //controls the intervals of updating and rendering the game objects based on time 
+    main() {
+        var that = this;
         var now = Date.now(),
-            dt = (now - lastTime) / 1000.0;
+            dt = (now - this.lastTime) / 1000.0;
 
-        update(dt);
-        render();
+        this.update(dt);
+        this.render();
 
-        lastTime = now;
+        this.lastTime = now;
 
-        win.requestAnimationFrame(main);
+        this.win.requestAnimationFrame(function () {
+            that.main();
+        });
     }
 
-    function init() {
-        reset();
-        lastTime = Date.now();
-        main();
+    //initializes object and calls Main function
+    init() {
+        this.reset();
+        this.lastTime = Date.now();
+        this.main();
     }
 
-    function update(dt) {
-        updateEntities(dt);
-        checkCollisions();
+    update(dt) {
+        this.updateEntities(dt);
+        this.checkCollisions();
     }
 
-    function updateEntities(dt) {
-        allEnemies.forEach(function(enemy) {
+    //updates the entities registered to the object 
+    updateEntities(dt) {
+        allEnemies.forEach(function (enemy) {
             enemy.update(dt);
         });
-        //score.render();
-        //player.update();
     }
 
-    function render() {
+    //renders the constant unmoving objects as well as the Enemy objects
+    render() {
         var rowImages = [
-                'images/grass-block.png',   // Row 1 of 1 of grass
-                'images/stone-block.png',   // Row 1 of 2 of stone
-                'images/stone-block.png',   // Row 2 of 2 of stone
-                'images/grass-block.png'    // Row 1 of 1 of grass
-            ],
+            'images/grass-block.png',   // Row 1 of 1 of grass
+            'images/stone-block.png',   // Row 1 of 2 of stone
+            'images/stone-block.png',   // Row 2 of 2 of stone
+            'images/grass-block.png'    // Row 1 of 1 of grass
+        ],
             numRows = 4,
             numCols = 9,
             row, col;
 
         for (row = 0; row < numRows; row++) {
             for (col = 0; col < numCols; col++) {
-                ctx.drawImage(Resources.get(rowImages[row]), col * 101, row * 83);
+                ctx.drawImage(resources.get(rowImages[row]), col * 101, row * 83);
             }
         }
 
-        renderEntities();
+        this.renderEntities();
     }
 
-    function renderEntities() {
-        allEnemies.forEach(function(enemy) {
+    // renders the , enemy, player and score objects
+    renderEntities() {
+        allEnemies.forEach(function (enemy) {
             enemy.render();
         });
 
@@ -74,78 +81,73 @@ var Engine = (function(global) {
         score.render();
     }
 
-    function reset() {
+    //place holder for reset
+    reset() {
         // noop
     }
 
-    Resources.load([
-        'images/stone-block.png',
-        'images/grass-block.png',
-        'images/car-l-r.png',
-        'images/car-r-l.png',
-        'images/char-boy.png'
-    ]);
-    Resources.onReady(init);
+    //checks collisions between player and all enemies by checking if any points within 
+    // the player rectangle are within any of the enemies' rectangles
+    checkCollisions() {
+        var that = this;
+        allEnemies.forEach(function (enemy) {
 
-    global.ctx = ctx;
-    
-    function checkCollisions() {
-        allEnemies.forEach(function(enemy) {
-    
-            var A = [enemy.x, enemy.y + ENEMY_ROW_HEIGHT_ADJUST];
-            var B = [enemy.x + MAX_BLOCK_WIDTH, enemy.y + ENEMY_ROW_HEIGHT_ADJUST];
-            var C = [enemy.x + MAX_BLOCK_WIDTH, enemy.y + ROW_HEIGHT + ENEMY_ROW_HEIGHT_ADJUST];
-            var D = [enemy.x, enemy.y + ROW_HEIGHT + ENEMY_ROW_HEIGHT_ADJUST];
-    
-            var W = [player.x, player.y + PLAYER_ROW_HEIGHT_ADJUST_1];
-            var X = [player.x + MAX_BLOCK_WIDTH, player.y + PLAYER_ROW_HEIGHT_ADJUST_1];
-            var Y = [player.x + MAX_BLOCK_WIDTH, player.y + ROW_HEIGHT + PLAYER_ROW_HEIGHT_ADJUST_2];
-            var Z = [player.x, player.y + ROW_HEIGHT + PLAYER_ROW_HEIGHT_ADJUST_2];
-    
-            if (enemy.x > 0 && enemy.x < MAX_CANVAS_WIDTH) {
-                if (checkPointInRectangle(A, B, C, D, W) ||
-                    checkPointInRectangle(A, B, C, D, X) ||
-                    checkPointInRectangle(A, B, C, D, Y) ||
-                    checkPointInRectangle(A, B, C, D, Z)) {
+            var A = [enemy.x, enemy.y + config.enemyRowHeightAdjust];
+            var B = [enemy.x + config.maxBlockWidth, enemy.y + config.enemyRowHeightAdjust];
+            var C = [enemy.x + config.maxBlockWidth, enemy.y + config.rowHeight + config.enemyRowHeightAdjust];
+            var D = [enemy.x, enemy.y + config.rowHeight + config.enemyRowHeightAdjust];
+
+            var W = [player.x, player.y + config.playerRowHeightAdjust1];
+            var X = [player.x + config.maxBlockWidth, player.y + config.playerRowHeightAdjust1];
+            var Y = [player.x + config.maxBlockWidth, player.y + config.rowHeight + config.playerRowHeightAdjust2];
+            var Z = [player.x, player.y + config.rowHeight + config.playerRowHeightAdjust2];
+
+            if (enemy.x > 0 && enemy.x < config.maxCanvasWidth) {
+                if (that.checkPointInRectangle(A, B, C, D, W) ||
+                that.checkPointInRectangle(A, B, C, D, X) ||
+                that.checkPointInRectangle(A, B, C, D, Y) ||
+                that.checkPointInRectangle(A, B, C, D, Z)) {
                     enemy.die();
                     player.die();
-    
+
                 };
             }
         });
-    };
-    function checkPointInRectangle(A, B, C, D, P){
-    
+    }
+
+    //checks whether an [x,y] point exists within a rectangle
+    checkPointInRectangle(A, B, C, D, P) {
+
         //reference: https://martin-thoma.com/how-to-check-if-a-point-is-inside-a-rectangle/
         //
         //area of enemy rectangle, I could have used the simple rectangle aligned with x-y axis formula but
         //this is fun and who knows, maybe I will need it :)
         //           = 0.5           | (yA   - yC  )�(xD   - xB  )  +  (yB   - yD  )�(xA   - xC)|
-        var areaRect = 0.5 * Math.abs(((A[1] - C[1])*(D[0] - B[0])) + ((B[1] - D[1])*(A[0] - C[0])));
-    
+        var areaRect = 0.5 * Math.abs(((A[1] - C[1]) * (D[0] - B[0])) + ((B[1] - D[1]) * (A[0] - C[0])));
+
         var ABP = 0.5 * Math.abs(
-              A[0] * (B[1] - P[1])
+            A[0] * (B[1] - P[1])
             + B[0] * (P[1] - A[1])
             + P[0] * (A[1] - B[1]));
-    
+
         var BCP = 0.5 * Math.abs(
-              (B[0] * (C[1] - P[1]))
+            (B[0] * (C[1] - P[1]))
             + (C[0] * (P[1] - B[1]))
             + (P[0] * (B[1] - C[1])));
-    
+
         var CDP = 0.5 * Math.abs(
-              (C[0] * (D[1] - P[1]))
+            (C[0] * (D[1] - P[1]))
             + (D[0] * (P[1] - C[1]))
             + (P[0] * (C[1] - D[1])));
-    
+
         var DAP = 0.5 * Math.abs(
-              (D[0] * (A[1] - P[1]))
+            (D[0] * (A[1] - P[1]))
             + (A[0] * (P[1] - D[1]))
             + (P[0] * (D[1] - A[1])));
-    
-        var totTri = ABP+BCP+CDP+DAP;
-    
+
+        var totTri = ABP + BCP + CDP + DAP;
+
         return areaRect == totTri;
-    
+
     }
-})(this);
+}

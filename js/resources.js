@@ -1,60 +1,67 @@
-'use strict';
-(function() {
-    var resourceCache = {};
-    var loading = [];
-    var readyCallbacks = [];
+class Resources {
 
-    function load(urlOrArr) {
-        if(urlOrArr instanceof Array) {
-            urlOrArr.forEach(function(url) {
-                _load(url);
-            });
-        } else {
-            _load(urlOrArr);
-        }
+    constructor() {
+        this.resourceCache = {};
+        this.loading = [];
+        this.readyCallbacks = [];     
+        this.load([
+            'images/stone-block.png',
+            'images/grass-block.png',
+            'images/car-l-r.png',
+            'images/car-r-l.png',
+            'images/char-boy.png'
+        ]);   
     }
 
-    function _load(url) {
-        if(resourceCache[url]) {
-            return resourceCache[url];
+    load(urlOrArr) {
+        var that = this;
+        if(urlOrArr instanceof Array) {
+            urlOrArr.forEach(function(url) {
+                that._load(url);
+            });
+        } else {
+            this._load(urlOrArr);
+        };
+    }
+
+    _load(url) {
+        var that = this;
+        
+        if(this.resourceCache[url]) {
+            return this.resourceCache[url];
         } else {
             var img = new Image();
             img.onload = function() {
-                resourceCache[url] = img;
+                that.resourceCache[url] = img;
 
-                if(isReady()) {
-                    readyCallbacks.forEach(function(func) { func(); });
+                if(that.isReady()) {
+                    that.readyCallbacks.forEach(function(func) { func(); });
                 }
             };
 
-            resourceCache[url] = false;
+            this.resourceCache[url] = false;
             img.src = url;
         }
     }
 
-    function get(url) {
-        return resourceCache[url];
+    get(url) {
+        return this.resourceCache[url];
     }
 
-    function isReady() {
+    isReady() {
         var ready = true;
-        for(var k in resourceCache) {
-            if(resourceCache.hasOwnProperty(k) &&
-               !resourceCache[k]) {
+        for(var k in this.resourceCache) {
+            if(this.resourceCache.hasOwnProperty(k) &&
+               !this.resourceCache[k]) {
                 ready = false;
             }
         }
         return ready;
     }
 
-    function onReady(func) {
-        readyCallbacks.push(func);
+    onReady(func) {
+        this.readyCallbacks.push(func);
     }
 
-    window.Resources = {
-        load: load,
-        get: get,
-        onReady: onReady,
-        isReady: isReady
-    };
-})();
+    
+}
