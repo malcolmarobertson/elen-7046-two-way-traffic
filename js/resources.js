@@ -13,6 +13,7 @@ class Resources {
         ]);   
     }
 
+    //loads images into object
     load(urlOrArr) {
         var that = this;
         if(urlOrArr instanceof Array) {
@@ -24,6 +25,7 @@ class Resources {
         };
     }
 
+    //this function should be private but not found a way to do so in JS
     _load(url) {
         var that = this;
         
@@ -44,10 +46,12 @@ class Resources {
         }
     }
 
+    //gets the image
     get(url) {
         return this.resourceCache[url];
     }
 
+    // checks if image is loaded and ready for use
     isReady() {
         var ready = true;
         for(var k in this.resourceCache) {
@@ -59,6 +63,7 @@ class Resources {
         return ready;
     }
 
+    //when images are loaded calls a function as parameter
     onReady(func) {
         this.readyCallbacks.push(func);
     }

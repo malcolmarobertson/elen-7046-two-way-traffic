@@ -6,9 +6,16 @@
 // avatar: png graphic representing the character
 class GameObject {
     constructor(avatar, x, y) {
+        if (new.target === GameObject) 
+            throw TypeError("Cannot call new on abstract class GameObject");
         this.avatar = avatar;
         this.x = x;
         this.y = y;
+    }
+
+    //force virtual function to be implemented in sub-class
+    render() {
+        throw new Error('You have to implement the method render()!');
     }
 }
 
@@ -137,38 +144,49 @@ class Player extends GameObject {
     }
 
     //function called when player dies, increases score and resets to start position
-        win() {
+    win() {
         score.increase();
         this.x = config.playerStartX;
         this.y = config.playerStartY;
     }
 }
 
+class Enemies {
+    constructor() {
+        this.enemies = [];
+    }
 
-// MAIN CODE
-var config = new Config();
+    //creates enemy objects based on configuration, using lane count and enemy per lane count
+    //pushes the enemies onto an array
+    createEnemies() {
+        for (var i = 1; i <= config.laneCount; i++) {
+            for (var j = 1; j <= config.enemyPerLane; j++) {
+                var nme = new Enemy(i % 2 ? config.dirLeftRight : config.dirRightLeft, i);
+                this.enemies.push(nme);
+            }
+        }
+    }
 
-//creates enemy objects based on configuration, using lane count and enemy per lane count
-//pushes the enemies onto an array
-var allEnemies = [];
-
-for (var i = 1; i <= config.laneCount; i++) {
-    for (var j = 1; j <= config.enemyPerLane; j++) {
-        var nme = new Enemy(i % 2 ? config.dirLeftRight : config.dirRightLeft, i);
-        allEnemies.push(nme);
+    //starts all Enemy objects
+    startEnemies(){
+        this.enemies.forEach(function (enemy) {
+            enemy.startRunning();
+        });
     }
 }
 
-//starts all Enemy objects
-allEnemies.forEach(function (enemy) {
-    enemy.startRunning();
-});
+// MAIN CODE
+var config = new Config();
+var allEnemies = new Enemies();
 
 var score = new Score();
 var player = new Player();
 var resources = new Resources();
 var engine = new Engine(this);
+
 resources.onReady(function () {
+    allEnemies.createEnemies();
+    allEnemies.startEnemies();
     engine.init();
 });
 

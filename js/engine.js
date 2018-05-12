@@ -45,7 +45,7 @@ class Engine {
 
     //updates the entities registered to the object 
     updateEntities(dt) {
-        allEnemies.forEach(function (enemy) {
+        allEnemies.enemies.forEach(function (enemy) {
             enemy.update(dt);
         });
     }
@@ -73,7 +73,7 @@ class Engine {
 
     // renders the , enemy, player and score objects
     renderEntities() {
-        allEnemies.forEach(function (enemy) {
+        allEnemies.enemies.forEach(function (enemy) {
             enemy.render();
         });
 
@@ -90,7 +90,7 @@ class Engine {
     // the player rectangle are within any of the enemies' rectangles
     checkCollisions() {
         var that = this;
-        allEnemies.forEach(function (enemy) {
+        allEnemies.enemies.forEach(function (enemy) {
 
             var A = [enemy.x, enemy.y + config.enemyRowHeightAdjust];
             var B = [enemy.x + config.maxBlockWidth, enemy.y + config.enemyRowHeightAdjust];
