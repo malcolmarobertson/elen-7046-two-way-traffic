@@ -192,12 +192,5 @@ resources.onReady(function () {
 
 //JS code to enable listener for keys and send to player object if meets criteria
 document.addEventListener('keyup', function (e) {
-    var allowedKeys = {
-        37: 'left',
-        38: 'up',
-        39: 'right',
-        40: 'down'
-    };
-
-    player.handleInput(allowedKeys[e.keyCode]);
+    player.handleInput(config.allowedKeys[e.keyCode]);
 });

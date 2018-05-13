@@ -23,6 +23,12 @@ class Config {
         this.laneCount = 2,
         this.enemyPerLane = 5,
         this.minEnemyDelay = 2000,
-        this.maxEnemyDelay = 5000
+        this.maxEnemyDelay = 5000,
+        this.allowedKeys = {
+            37: 'left',
+            38: 'up',
+            39: 'right',
+            40: 'down'
+        }
     }
 }
